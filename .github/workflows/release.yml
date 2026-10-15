@@ -1,0 +1,173 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - target: macos-arm64
+            runner: macos-15
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - target: linux-x86_64
+            runner: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, zip, phar
+          tools: composer
+          coverage: none
+
+      - name: Install venusian and venusian/build
+        run: |
+          composer global require --no-interaction --no-progress venusian/installer:^0.10.3 venusian/build:^0.10.9
+          composer global config bin-dir --absolute --quiet >> "$GITHUB_PATH"
+
+      - name: Install macOS build tools
+        if: runner.os == 'macOS'
+        run: brew install autoconf cmake pkg-config
+
+      - name: Set up macOS signing and notarization
+        if: runner.os == 'macOS'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          # An ad-hoc signed .dmg opens only on the Mac that built it, so a release needs a Developer ID.
+          missing=()
+          for name in MACOS_CERTIFICATE MACOS_CERTIFICATE_PASSWORD APPLE_ID APPLE_TEAM_ID APPLE_APP_SPECIFIC_PASSWORD; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing repository secrets for macOS signing: ${missing[*]}"
+            exit 1
+          fi
+
+          keychain="$RUNNER_TEMP/release.keychain-db"
+          keychain_password="$(openssl rand -hex 24)"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$keychain" -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          rm "$RUNNER_TEMP/certificate.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$keychain" > /dev/null
+
+          # venusian build finds the identity and the notary profile through the user's keychain search list.
+          searched=()
+          while IFS= read -r path; do
+            searched+=("$path")
+          done < <(security list-keychains -d user | sed -e 's/^[[:space:]]*"//' -e 's/"$//')
+          security list-keychains -d user -s "$keychain" "${searched[@]}"
+          security default-keychain -d user -s "$keychain"
+          xcrun notarytool store-credentials venusian \
+            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --keychain "$keychain"
+
+          identity="$(security find-identity -v -p codesigning "$keychain" | awk '/Developer ID Application/ { print $2; exit }')"
+          if [ -z "$identity" ]; then
+            echo "::error::MACOS_CERTIFICATE holds no Developer ID Application identity"
+            exit 1
+          fi
+          mkdir -p ~/.venusian/build
+          jq -n --arg sign "$identity" '{macos: {sign: $sign, notary_profile: "venusian"}}' > ~/.venusian/build/config.json
+
+      - name: Build
+        run: .github/build-release.sh "${{ matrix.target }}" "${GITHUB_REF_NAME#v}" "${{ github.run_number }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.target }}
+          path: |
+            build/*.dmg
+            build/*.deb
+          if-no-files-found: error
+
+  verify:
+    name: Install on ${{ matrix.image }} ${{ matrix.target }}
+    needs: build
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - image: debian:13
+            target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - image: ubuntu:24.04
+            target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - image: ubuntu:24.04
+            target: linux-x86_64
+            runner: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ matrix.target }}
+          path: package
+
+      - name: Install the .deb, resolve its libraries and boot the app
+        run: |
+          docker run --rm -v "$PWD/package:/package:ro" "${{ matrix.image }}" bash -euo pipefail -c '
+            apt-get update
+            DEBIAN_FRONTEND=noninteractive apt-get install -y /package/*.deb
+            unresolved="$(ldd /usr/lib/stargazer/stargazer | grep "not found" || true)"
+            if [ -n "$unresolved" ]; then
+              echo "$unresolved"
+              exit 1
+            fi
+            mkdir -p /tmp/home
+            HOME=/tmp/home XDG_DATA_HOME=/tmp/home/.local/share \
+              /usr/lib/stargazer/stargazer phar:///usr/lib/stargazer/stargazer.phar/.venusian-boot-check.php | tee /tmp/boot.log
+            tail -n 1 /tmp/boot.log | grep -q "\"booted\":true"
+          '
+
+  release:
+    name: Publish the GitHub release
+    needs: [build, verify]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          notes="$(cat <<EOF
+          | System | Download |
+          | --- | --- |
+          | macOS 14 or newer, Apple Silicon | \`stargazer-${version}-macos-arm64.dmg\` |
+          | Ubuntu 24.04 or newer, Debian 13, Raspberry Pi OS trixie, on arm64 | \`stargazer_${version}_arm64.deb\` |
+          | Ubuntu 24.04 or newer, Debian 13, on x86_64 | \`stargazer_${version}_amd64.deb\` |
+
+          Install a \`.deb\` with \`sudo apt install ./stargazer_${version}_<arch>.deb\`.
+          EOF
+          )"
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "Stargazer ${version}" --notes "$notes" --generate-notes
+          fi

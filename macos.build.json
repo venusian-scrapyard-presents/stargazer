@@ -4,7 +4,7 @@
     "description": "Browse the Astronomy Picture of the Day by date, in HD when you want it.",
     "author": "Angel Gonzalez <usftechacg@gmail.com>",
     "homepage": "https://github.com/VenusianPHP",
-    "license": "MIT",
+    "license": "GPL-3.0-only",
     "category": "Education",
     "icon": "art/icon.png",
     "targets": [
@@ -12,7 +12,8 @@
     ],
     "extensions": [
         "pdo_sqlite",
-        "imgdec"
+        "imgdec",
+        "phpredis/phpredis"
     ],
     "env": {
         "TOOLKIT_BRIDGE": "appkit",
