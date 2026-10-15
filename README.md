@@ -55,15 +55,13 @@ php computer migrate
 php rocket stargazer
 ```
 
-**Linux:** the checked-in `composer.json` targets macOS and requires the AppKit bridge, so swap it for the GTK bridge before installing:
+**Linux:** `composer.json` and `composer.lock` carry the macOS AppKit bridge; `composer.linux.json` and `composer.linux.lock` are the same set with the GTK bridge. Point Composer at them:
 
 ```bash
 git clone https://github.com/venusian-scrapyard-presents/stargazer.git
 cd stargazer
 cp linux.env.example .env
-composer remove jovian/venusian-appkit --no-update
-composer require jovian/venusian-gtk --no-update
-composer run setup
+COMPOSER=composer.linux.json composer run setup
 php computer migrate
 php rocket stargazer
 ```

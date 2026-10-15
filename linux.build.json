@@ -13,9 +13,13 @@
     ],
     "extensions": [
         "pdo_sqlite",
-        "imgdec",
-        "phpredis/phpredis",
-        "gtk"
+        "php-io-extensions/epoll",
+        "php-io-extensions/pcurl",
+        "php-io-extensions/rasterize",
+        "php-io-extensions/gtk",
+        "php-io-extensions/fb",
+        "php-io-extensions/imgdec",
+        "phpredis/phpredis"
     ],
     "env": {
         "TOOLKIT_BRIDGE": "gtk",

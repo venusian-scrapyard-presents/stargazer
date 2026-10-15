@@ -12,7 +12,12 @@
     ],
     "extensions": [
         "pdo_sqlite",
-        "imgdec",
+        "php-io-extensions/kqueue",
+        "php-io-extensions/pcurl",
+        "php-io-extensions/rasterize",
+        "php-io-extensions/appkit",
+        "php-io-extensions/fb",
+        "php-io-extensions/imgdec",
         "phpredis/phpredis"
     ],
     "env": {

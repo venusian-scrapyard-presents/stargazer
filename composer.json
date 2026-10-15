@@ -21,9 +21,9 @@
         "ext-xmlreader": "*",
         "ext-simplexml": "*",
         "ext-redis": "*",
-        "venusian/surface": "^0.10.0",
+        "venusian/surface": "^0.10.1",
         "venusian/framework": "^0.10.0",
-        "jovian/venusian-appkit": "^0.10.0",
+        "jovian/venusian-appkit": "^0.10.2",
         "venusian/probe": "^0.10.0",
         "projectsaturnstudios/venusian-stargazer": "^0.10.0"
     },
