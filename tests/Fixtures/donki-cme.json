@@ -1,0 +1,626 @@
+[
+ {
+  "activityID": "2024-05-08T05:36:00-CME-001",
+  "catalog": "M2M_CATALOG",
+  "startTime": "2024-05-08T05:36Z",
+  "instruments": [
+   {
+    "displayName": "SOHO: LASCO/C2"
+   },
+   {
+    "displayName": "SOHO: LASCO/C3"
+   },
+   {
+    "displayName": "STEREO A: SECCHI/COR2"
+   }
+  ],
+  "sourceLocation": "S22W10",
+  "activeRegionNum": 13664,
+  "note": "Earth-directed full halo seen in all coronagraphs. The source is a large eruption from AR 3664, which included two flares seen in SDO AIA 131, an initial M3.5 (S21W10) followed by the main long-duration X1.0 (S22W10) which peaked at 2024-05-08T04:30Z and 2024-05-08T05:09Z respectively. An EUV wave and field line movement is observed in SDO AIA 94/131/171/211 with some surface brightening in SDO AIA 304. This flare+CME combo resulted in a small rise in protons observed at SOHO and GOES, but not enough for a threshold crossing.",
+  "cmeAnalyses": [
+   {
+    "isMostAccurate": true,
+    "levelOfData": 0,
+    "time21_5": "2024-05-08T09:30Z",
+    "latitude": -7.0,
+    "longitude": 9.0,
+    "halfAngle": 43.0,
+    "speed": 870.0,
+    "type": "C",
+    "featureCode": "LE",
+    "imageType": "running difference",
+    "measurementTechnique": "SWPC_CAT",
+    "note": "BULK measurement using both coronagraphs to triangulate the same features, using AR 3664 as the source. This CME front is notably asymmetric in all imagery, but there is high confidence in all three \"nodes\" in different directions pertaining to the same CME front directed towards Earth from this same eruption. The right hand boundary was mainly used, matching the half-width to the peaks of each node of the asymmetric front, which tracked surprisingly well once aligned.",
+    "minorHalfWidth": null,
+    "speedMeasuredAtHeight": 21.3,
+    "tilt": null,
+    "submissionTime": "2025-03-12T16:52Z",
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CMEAnalysis/30590/-1",
+    "enlilList": [
+     {
+      "modelCompletionTime": "2024-05-08T18:23Z",
+      "au": 2.0,
+      "estimatedShockArrivalTime": "2024-05-10T12:14Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 5.3,
+      "kp_18": null,
+      "kp_90": 6,
+      "kp_135": 7,
+      "kp_180": 8,
+      "estimatedDuration": 22.3,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30591/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-12T08:48Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "Parker Solar Probe",
+        "arrivalTime": "2024-05-10T13:00Z",
+        "isGlancingBlow": true,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T07:28Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T05:36:00-CME-001"
+      ]
+     },
+     {
+      "modelCompletionTime": "2024-05-08T18:42Z",
+      "au": 2.0,
+      "estimatedShockArrivalTime": "2024-05-10T12:19Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 5.0,
+      "kp_18": null,
+      "kp_90": 6,
+      "kp_135": 7,
+      "kp_180": 8,
+      "estimatedDuration": 13.3,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30593/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-12T08:42Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "Parker Solar Probe",
+        "arrivalTime": "2024-05-10T13:00Z",
+        "isGlancingBlow": true,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T07:27Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T12:24:00-CME-001",
+       "2024-05-08T05:36:00-CME-001"
+      ]
+     },
+     {
+      "modelCompletionTime": "2024-05-09T20:28Z",
+      "au": 2.0,
+      "estimatedShockArrivalTime": "2024-05-10T13:03Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 4.1,
+      "kp_18": null,
+      "kp_90": 8,
+      "kp_135": 9,
+      "kp_180": 9,
+      "estimatedDuration": 22.4,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30651/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-12T04:05Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T07:53Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T12:24:00-CME-001",
+       "2024-05-08T05:36:00-CME-001",
+       "2024-05-08T19:12:00-CME-001",
+       "2024-05-09T09:24:00-CME-001",
+       "2024-05-08T22:24:00-CME-001"
+      ]
+     },
+     {
+      "modelCompletionTime": "2024-05-09T20:46Z",
+      "au": 5.5,
+      "estimatedShockArrivalTime": "2024-05-10T12:50Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 4.1,
+      "kp_18": null,
+      "kp_90": 8,
+      "kp_135": 9,
+      "kp_180": 9,
+      "estimatedDuration": 22.1,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30652/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-12T04:00Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "Psyche",
+        "arrivalTime": "2024-05-16T00:00Z",
+        "isGlancingBlow": true,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T07:47Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T12:24:00-CME-001",
+       "2024-05-08T05:36:00-CME-001",
+       "2024-05-08T19:12:00-CME-001",
+       "2024-05-09T09:24:00-CME-001",
+       "2024-05-08T22:24:00-CME-001"
+      ]
+     }
+    ]
+   },
+   {
+    "isMostAccurate": true,
+    "levelOfData": 0,
+    "time21_5": "2024-05-08T09:47Z",
+    "latitude": -15.0,
+    "longitude": 15.0,
+    "halfAngle": 45.0,
+    "speed": 729.0,
+    "type": "C",
+    "featureCode": "SH",
+    "imageType": "running difference",
+    "measurementTechnique": "SWPC_CAT",
+    "note": "SHOCK measurement made using both coronagraphs. Source of AR 3664 (S22W10) used as a basis finding a good triangulation between coronagraphs near here, mainly tracking the southern portion of the front as it is the most visible and distinguishable amongst the rest of the complex running difference imagery at this time.",
+    "minorHalfWidth": null,
+    "speedMeasuredAtHeight": 17.0,
+    "tilt": null,
+    "submissionTime": "2024-05-08T19:50Z",
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CMEAnalysis/30597/-1",
+    "enlilList": [
+     {
+      "modelCompletionTime": "2024-05-08T19:56Z",
+      "au": 2.0,
+      "estimatedShockArrivalTime": "2024-05-10T18:29Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 5.6,
+      "kp_18": null,
+      "kp_90": 5,
+      "kp_135": 7,
+      "kp_180": 7,
+      "estimatedDuration": 21.5,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30645/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-12T18:06Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T12:58Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T05:36:00-CME-001"
+      ]
+     }
+    ]
+   }
+  ],
+  "linkedEvents": [
+   {
+    "activityID": "2024-05-08T04:20:00-FLR-001"
+   },
+   {
+    "activityID": "2024-05-08T04:37:00-FLR-001"
+   },
+   {
+    "activityID": "2024-05-10T13:35:00-SEP-001"
+   },
+   {
+    "activityID": "2024-05-10T14:00:00-IPS-001"
+   },
+   {
+    "activityID": "2024-05-10T15:00:00-GST-001"
+   },
+   {
+    "activityID": "2024-05-10T16:36:00-IPS-001"
+   },
+   {
+    "activityID": "2024-05-10T18:01:00-MPC-001"
+   },
+   {
+    "activityID": "2024-05-15T13:55:00-RBE-001"
+   }
+  ],
+  "sentNotifications": [
+   {
+    "messageID": "20240508-AL-012",
+    "messageIssueTime": "2024-05-08T18:43Z",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/30592/1"
+   },
+   {
+    "messageID": "20240509-AL-010",
+    "messageIssueTime": "2024-05-09T21:24Z",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/30653/1"
+   }
+  ],
+  "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/30589/-1",
+  "submissionTime": "2024-05-08T18:22Z",
+  "versionId": 2
+ },
+ {
+  "activityID": "2024-05-08T12:24:00-CME-001",
+  "catalog": "M2M_CATALOG",
+  "startTime": "2024-05-08T12:24Z",
+  "instruments": [
+   {
+    "displayName": "SOHO: LASCO/C2"
+   },
+   {
+    "displayName": "SOHO: LASCO/C3"
+   },
+   {
+    "displayName": "STEREO A: SECCHI/COR2"
+   }
+  ],
+  "sourceLocation": "S20W11",
+  "activeRegionNum": 13664,
+  "note": "Earth-directed full halo seen in all coronagraphs. The source is a large eruption from AR 3664, which included a long-duration M8.6 flare (S22W11) which peaked at 2024-05-08T12:04Z best seen in SDO AIA 131. An EUV wave and field line movement is observed in SDO AIA 94/131/171/211 with some surface brightening in SDO AIA 304. This flare+CME combo resulted in a small rise in protons observed at SOHO and GOES, but not enough for a threshold crossing. The start time used here is when the shock front emerges, with the brighter bulk front emerging ~2024-05-08T13:00Z.",
+  "cmeAnalyses": [
+   {
+    "isMostAccurate": true,
+    "levelOfData": 0,
+    "time21_5": "2024-05-08T16:58Z",
+    "latitude": -5.0,
+    "longitude": 3.0,
+    "halfAngle": 45.0,
+    "speed": 776.0,
+    "type": "C",
+    "featureCode": "LE",
+    "imageType": "running difference",
+    "measurementTechnique": "SWPC_CAT",
+    "note": "Preliminary BULK measurement made using both coronagraphs, with limited imagery due to a current gap between SOHO downlinks due to resume at T17:15Z today and recency of the front emerging in all imagery. Source of S22W11 (the M8.6-Class flare) used as a basis, finding a good triangulation between SOHO and STEREO with some NE deflection.",
+    "minorHalfWidth": null,
+    "speedMeasuredAtHeight": 13.1,
+    "tilt": null,
+    "submissionTime": "2024-05-08T16:38Z",
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CMEAnalysis/30565/-1",
+    "enlilList": [
+     {
+      "modelCompletionTime": "2024-05-08T16:18Z",
+      "au": 2.0,
+      "estimatedShockArrivalTime": "2024-05-11T01:39Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 5.4,
+      "kp_18": null,
+      "kp_90": 5,
+      "kp_135": 7,
+      "kp_180": 7,
+      "estimatedDuration": 24.8,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30568/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-13T03:59Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "Parker Solar Probe",
+        "arrivalTime": "2024-05-10T10:00Z",
+        "isGlancingBlow": true,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T20:45Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T12:24:00-CME-001"
+      ]
+     },
+     {
+      "modelCompletionTime": "2024-05-08T18:42Z",
+      "au": 2.0,
+      "estimatedShockArrivalTime": "2024-05-10T12:19Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 5.0,
+      "kp_18": null,
+      "kp_90": 6,
+      "kp_135": 7,
+      "kp_180": 8,
+      "estimatedDuration": 13.3,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30593/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-12T08:42Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "Parker Solar Probe",
+        "arrivalTime": "2024-05-10T13:00Z",
+        "isGlancingBlow": true,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T07:27Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T12:24:00-CME-001",
+       "2024-05-08T05:36:00-CME-001"
+      ]
+     },
+     {
+      "modelCompletionTime": "2024-05-09T20:28Z",
+      "au": 2.0,
+      "estimatedShockArrivalTime": "2024-05-10T13:03Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 4.1,
+      "kp_18": null,
+      "kp_90": 8,
+      "kp_135": 9,
+      "kp_180": 9,
+      "estimatedDuration": 22.4,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30651/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-12T04:05Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T07:53Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T12:24:00-CME-001",
+       "2024-05-08T05:36:00-CME-001",
+       "2024-05-08T19:12:00-CME-001",
+       "2024-05-09T09:24:00-CME-001",
+       "2024-05-08T22:24:00-CME-001"
+      ]
+     },
+     {
+      "modelCompletionTime": "2024-05-09T20:46Z",
+      "au": 5.5,
+      "estimatedShockArrivalTime": "2024-05-10T12:50Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 4.1,
+      "kp_18": null,
+      "kp_90": 8,
+      "kp_135": 9,
+      "kp_180": 9,
+      "estimatedDuration": 22.1,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30652/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-12T04:00Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "Psyche",
+        "arrivalTime": "2024-05-16T00:00Z",
+        "isGlancingBlow": true,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T07:47Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T12:24:00-CME-001",
+       "2024-05-08T05:36:00-CME-001",
+       "2024-05-08T19:12:00-CME-001",
+       "2024-05-09T09:24:00-CME-001",
+       "2024-05-08T22:24:00-CME-001"
+      ]
+     }
+    ]
+   },
+   {
+    "isMostAccurate": true,
+    "levelOfData": 0,
+    "time21_5": "2024-05-08T15:16Z",
+    "latitude": -15.0,
+    "longitude": 8.0,
+    "halfAngle": 43.0,
+    "speed": 1156.0,
+    "type": "O",
+    "featureCode": "SH",
+    "imageType": "running difference",
+    "measurementTechnique": "SWPC_CAT",
+    "note": "Preliminary SHOCK measurement made using both coronagraphs, with limited imagery due to a current gap between SOHO downlinks due to resume at T17:15Z today and recency of the front emerging in all imagery. Source of S22W11 (the M8.6-Class flare) used as a basis finding a good triangulation between coronagraphs near here.",
+    "minorHalfWidth": null,
+    "speedMeasuredAtHeight": 19.2,
+    "tilt": null,
+    "submissionTime": "2024-05-08T16:38Z",
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CMEAnalysis/30573/-1",
+    "enlilList": [
+     {
+      "modelCompletionTime": "2024-05-08T16:45Z",
+      "au": 2.0,
+      "estimatedShockArrivalTime": "2024-05-10T12:12Z",
+      "isEarthGB": false,
+      "isEarthMinorImpact": false,
+      "rmin_re": 5.2,
+      "kp_18": null,
+      "kp_90": 6,
+      "kp_135": 8,
+      "kp_180": 8,
+      "estimatedDuration": 26.4,
+      "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30576/-1",
+      "impactList": [
+       {
+        "location": "Lucy",
+        "arrivalTime": "2024-05-12T06:55Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       },
+       {
+        "location": "Parker Solar Probe",
+        "arrivalTime": "2024-05-10T10:00Z",
+        "isGlancingBlow": true,
+        "isMinorImpact": false
+       },
+       {
+        "location": "STEREO A",
+        "arrivalTime": "2024-05-10T07:52Z",
+        "isGlancingBlow": false,
+        "isMinorImpact": false
+       }
+      ],
+      "cmeIDs": [
+       "2024-05-08T12:24:00-CME-001"
+      ]
+     }
+    ]
+   }
+  ],
+  "linkedEvents": [
+   {
+    "activityID": "2024-05-08T11:26:00-FLR-001"
+   },
+   {
+    "activityID": "2024-05-10T13:35:00-SEP-001"
+   },
+   {
+    "activityID": "2024-05-10T14:00:00-IPS-001"
+   },
+   {
+    "activityID": "2024-05-10T14:50:00-SEP-001"
+   },
+   {
+    "activityID": "2024-05-10T15:00:00-GST-001"
+   },
+   {
+    "activityID": "2024-05-10T16:36:00-IPS-001"
+   },
+   {
+    "activityID": "2024-05-10T18:01:00-MPC-001"
+   },
+   {
+    "activityID": "2024-05-15T13:55:00-RBE-001"
+   }
+  ],
+  "sentNotifications": [
+   {
+    "messageID": "20240508-AL-009",
+    "messageIssueTime": "2024-05-08T16:50Z",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/30575/1"
+   },
+   {
+    "messageID": "20240509-AL-010",
+    "messageIssueTime": "2024-05-09T21:24Z",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/30653/1"
+   }
+  ],
+  "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/30564/-1",
+  "submissionTime": "2024-05-08T15:46Z",
+  "versionId": 1
+ },
+ {
+  "activityID": "2024-05-10T02:12:00-CME-001",
+  "catalog": "M2M_CATALOG",
+  "startTime": "2024-05-10T02:12Z",
+  "instruments": [
+   {
+    "displayName": "SOHO: LASCO/C2"
+   },
+   {
+    "displayName": "SOHO: LASCO/C3"
+   },
+   {
+    "displayName": "STEREO A: SECCHI/COR2"
+   }
+  ],
+  "sourceLocation": "N30E90",
+  "activeRegionNum": null,
+  "note": "Slow CME with a myriad of successive front features, culminating in a wide funnel-like flux rope. Source is likely a faint but significant opening of field lines behind the NE limb seen in EUVI A around 2024-05-10T00Z.",
+  "cmeAnalyses": [
+   {
+    "isMostAccurate": true,
+    "levelOfData": 0,
+    "time21_5": "2024-05-10T22:51Z",
+    "latitude": 44.0,
+    "longitude": -90.0,
+    "halfAngle": 41.0,
+    "speed": 232.0,
+    "type": "S",
+    "featureCode": "LE",
+    "imageType": "running difference",
+    "measurementTechnique": "SWPC_CAT",
+    "note": "Very speculative analysis based on a fit with two coronagraphs. The source could be much further behind the limb.",
+    "minorHalfWidth": null,
+    "speedMeasuredAtHeight": null,
+    "tilt": null,
+    "submissionTime": "2024-05-12T20:22Z",
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CMEAnalysis/30789/-1",
+    "enlilList": []
+   }
+  ],
+  "linkedEvents": null,
+  "sentNotifications": null,
+  "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/30788/-1",
+  "submissionTime": "2024-05-12T20:20Z",
+  "versionId": 1
+ }
+]

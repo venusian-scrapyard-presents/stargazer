@@ -1,0 +1,25 @@
+{
+    "$schema": "https://raw.githubusercontent.com/VenusianPHP/build/main/schema/build.schema.json",
+    "id": "com.venusian.stargazer",
+    "version": "0.10.2",
+    "summary": "Play with NASAs APIs",
+    "description": "Browse the Astronomy Picture of the Day by date, in HD when you want it.",
+    "author": "Angel Gonzalez <usftechacg@gmail.com>",
+    "homepage": "https://github.com/VenusianPHP",
+    "license": "MIT",
+    "category": "Education",
+    "icon": "art/icon.png",
+    "targets": [
+        "macos-arm64"
+    ],
+    "extensions": [
+        "pecl/parallel",
+        "phpredis/phpredis"
+    ],
+    "env": {
+        "TOOLKIT_BRIDGE": "appkit",
+        "CACHE_STORE": "file",
+        "QUEUE_CONNECTION": "pool",
+        "APP_MEMORY_LIMIT": "512G"
+    }
+}

@@ -1,0 +1,82 @@
+[
+ {
+  "simulationID": "WSA-ENLIL/30568/1",
+  "modelCompletionTime": "2024-05-08T16:18Z",
+  "au": 2.0,
+  "cmeInputs": [],
+  "estimatedShockArrivalTime": "2024-05-11T01:39Z",
+  "isEarthGB": false,
+  "isEarthMinorImpact": false,
+  "rmin_re": 5.4,
+  "kp_18": null,
+  "kp_90": 5,
+  "kp_135": 7,
+  "kp_180": 7,
+  "estimatedDuration": 24.8,
+  "impactList": [
+   {
+    "location": "Lucy",
+    "arrivalTime": "2024-05-13T03:59Z",
+    "isGlancingBlow": false,
+    "isMinorImpact": false
+   },
+   {
+    "location": "Parker Solar Probe",
+    "arrivalTime": "2024-05-10T10:00Z",
+    "isGlancingBlow": true,
+    "isMinorImpact": false
+   },
+   {
+    "location": "STEREO A",
+    "arrivalTime": "2024-05-10T20:45Z",
+    "isGlancingBlow": false,
+    "isMinorImpact": false
+   }
+  ],
+  "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30568/-1"
+ },
+ {
+  "simulationID": "WSA-ENLIL/30747/1",
+  "modelCompletionTime": "2024-05-11T20:22Z",
+  "au": 2.0,
+  "cmeInputs": [
+   {
+    "cmeStartTime": "2024-05-11T16:24Z",
+    "latitude": -1.0,
+    "longitude": 53.0,
+    "speed": 1088.0,
+    "halfAngle": 22.0,
+    "time21_5": "2024-05-11T19:35Z",
+    "featureCode": "LE",
+    "isMostAccurate": false,
+    "levelOfData": 0,
+    "ipsList": [],
+    "CMEID": "2024-05-11T16:24:00-CME-001"
+   }
+  ],
+  "estimatedShockArrivalTime": null,
+  "isEarthGB": false,
+  "isEarthMinorImpact": false,
+  "rmin_re": null,
+  "kp_18": null,
+  "kp_90": null,
+  "kp_135": null,
+  "kp_180": null,
+  "estimatedDuration": null,
+  "impactList": [
+   {
+    "location": "Parker Solar Probe",
+    "arrivalTime": "2024-05-13T09:00Z",
+    "isGlancingBlow": true,
+    "isMinorImpact": false
+   },
+   {
+    "location": "STEREO A",
+    "arrivalTime": "2024-05-15T15:00Z",
+    "isGlancingBlow": true,
+    "isMinorImpact": false
+   }
+  ],
+  "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/WSA-ENLIL/30747/-1"
+ }
+]

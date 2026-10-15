@@ -1,0 +1,40 @@
+[
+ {
+  "hssID": "2024-05-02T13:15:00-HSS-001",
+  "eventTime": "2024-05-02T13:15Z",
+  "instruments": [
+   {
+    "displayName": "DSCOVR: PLASMAG"
+   },
+   {
+    "displayName": "ACE: SWEPAM"
+   },
+   {
+    "displayName": "ACE: MAG"
+   }
+  ],
+  "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/HSS/30422/-1",
+  "linkedEvents": [
+   {
+    "activityID": "2024-05-02T07:46:00-IPS-001"
+   }
+  ],
+  "sentNotifications": null,
+  "submissionTime": "2024-05-03T21:43Z",
+  "versionId": 1
+ },
+ {
+  "hssID": "2024-05-02T11:20:00-HSS-001",
+  "eventTime": "2024-05-02T11:20Z",
+  "instruments": [
+   {
+    "displayName": "STEREO A: IMPACT"
+   }
+  ],
+  "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/HSS/30423/-1",
+  "linkedEvents": null,
+  "sentNotifications": null,
+  "submissionTime": "2024-05-03T21:56Z",
+  "versionId": 2
+ }
+]

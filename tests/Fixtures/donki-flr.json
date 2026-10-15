@@ -1,0 +1,34 @@
+[
+    {
+        "flrID": "2017-09-06T08:57:00-FLR-001",
+        "catalog": "M2M_CATALOG",
+        "instruments": [
+            {
+                "displayName": "GOES15: SEM/XRS 1.0-8.0"
+            }
+        ],
+        "beginTime": "2017-09-06T08:57Z",
+        "peakTime": "2017-09-06T09:10Z",
+        "endTime": "2017-09-06T09:17Z",
+        "classType": "X2.2",
+        "sourceLocation": "S07W33",
+        "activeRegionNum": 12673,
+        "note": "",
+        "submissionTime": "2017-09-10T23:36Z",
+        "versionId": 4,
+        "link": "https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/FLR/13007/-1",
+        "linkedEvents": null,
+        "sentNotifications": [
+            {
+                "messageID": "20170906-AL-001",
+                "messageIssueTime": "2017-09-06T09:32Z",
+                "messageURL": "https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/Alert/13008/1"
+            },
+            {
+                "messageID": "20170906-AL-002",
+                "messageIssueTime": "2017-09-06T11:37Z",
+                "messageURL": "https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/Alert/13009/1"
+            }
+        ]
+    }
+]

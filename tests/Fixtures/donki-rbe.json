@@ -1,0 +1,49 @@
+[
+ {
+  "rbeID": "2024-05-15T13:55:00-RBE-001",
+  "eventTime": "2024-05-15T13:55Z",
+  "instruments": [
+   {
+    "displayName": "GOES-P: SEISS >2MeV"
+   }
+  ],
+  "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/RBE/30898/-1",
+  "linkedEvents": [
+   {
+    "activityID": "2024-05-07T03:12:00-CME-001"
+   },
+   {
+    "activityID": "2024-05-07T05:24:00-CME-001"
+   },
+   {
+    "activityID": "2024-05-08T05:36:00-CME-001"
+   },
+   {
+    "activityID": "2024-05-08T12:24:00-CME-001"
+   },
+   {
+    "activityID": "2024-05-08T19:12:00-CME-001"
+   },
+   {
+    "activityID": "2024-05-08T22:24:00-CME-001"
+   },
+   {
+    "activityID": "2024-05-09T09:24:00-CME-001"
+   }
+  ],
+  "sentNotifications": [
+   {
+    "messageID": "20240515-AL-005",
+    "messageIssueTime": "2024-05-15T14:02Z",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/30899/1"
+   },
+   {
+    "messageID": "20240515-AL-007",
+    "messageIssueTime": "2024-05-15T14:32Z",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/30902/1"
+   }
+  ],
+  "submissionTime": "2024-05-15T14:02Z",
+  "versionId": 1
+ }
+]

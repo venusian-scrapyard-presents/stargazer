@@ -1,0 +1,26 @@
+[
+    {
+        "time21_5": "2016-09-06T14:18Z",
+        "latitude": -20,
+        "longitude": 120,
+        "halfAngle": 31,
+        "speed": 674,
+        "type": "C",
+        "isMostAccurate": true,
+        "associatedCMEID": "2016-09-06T08:54:00-CME-001",
+        "associatedCMEstartTime": "2016-09-06T08:54Z",
+        "note": "",
+        "associatedCMELink": "https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/CME/11226/-1",
+        "catalog": "M2M_CATALOG",
+        "featureCode": "null",
+        "dataLevel": "1",
+        "measurementTechnique": "null",
+        "imageType": "null",
+        "tilt": null,
+        "minorHalfWidth": null,
+        "speedMeasuredAtHeight": null,
+        "submissionTime": "2016-09-06T15:43Z",
+        "versionId": 1,
+        "link": "https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/CMEAnalysis/11233/-1"
+    }
+]
