@@ -5,15 +5,20 @@ namespace App\NutsAndBolts;
 use App\Enums\Outcome;
 use App\GlobalVariables;
 use Surface\Contracts\Windows\Mail\MenuActivated;
+use Surface\Contracts\Windows\Mail\Services\AlertAnswered;
+use Surface\Contracts\Windows\Mail\Services\FilesChosen;
 use Surface\Contracts\Windows\Primitives\ImageScaling;
 use Surface\Contracts\Windows\Primitives\TKPrimitive;
+use Surface\Contracts\Windows\Services\Alert;
+use Surface\Contracts\Windows\Services\SaveRequest;
 use Surface\Core\MagicAliases\Toolkit;
 use Throwable;
+use Voyager\Contracts\Signals\NamedSignal;
 
 /**
- * A shown picture's context menu: right-click it to save it to the Downloads folder or open it
- * in a window of its own. The picture is the file the media cache already holds, so neither
- * asks the network again.
+ * A shown picture's context menu: right-click it to save it where you choose, copy its link, or
+ * open it in a window of its own. The picture is the file the media cache already holds, so none
+ * of these asks the network again.
  */
 final class PictureMenu
 {
@@ -23,11 +28,17 @@ final class PictureMenu
     /** The smallest a picture window opens, in points, along each side. */
     public const int WINDOW_MIN = 240;
 
-    /** Menu item ids: "picture.<token>.save" and "picture.<token>.open". */
-    protected const string ITEM = '/^picture\.(\d+)\.(save|open)$/';
+    /** Menu item ids: "picture.<token>.save", "picture.<token>.copy" and "picture.<token>.open". */
+    protected const string ITEM = '/^picture\.(\d+)\.(save|copy|open)$/';
 
-    /** @var array<int, array{0: string, 1: string}> Token => [file, name]. */
+    /** @var array<int, array{0: string, 1: string, 2: ?string}> Token => [file, name, link]. */
     protected array $targets = [];
+
+    /** @var array<string, array{0: string, 1: string, 2: string}> Save panel id => [file, name, screen]. */
+    protected static array $pending = [];
+
+    /** @var array<string, true> The ids of the failure alerts this menu opened. */
+    protected static array $alerts = [];
 
     /** Tokens stay unique across every menu, so a choice names one picture. */
     protected static int $tokens = 0;
@@ -45,12 +56,13 @@ final class PictureMenu
      * @param TKPrimitive $view The image primitive showing it.
      * @param string $file The cached file it shows.
      * @param string $name What to call it: the window title, and the saved file's name.
+     * @param string|null $link Its web address, for Copy Link; null leaves the item out.
      */
-    public function target(TKPrimitive $view, string $file, string $name): void
+    public function target(TKPrimitive $view, string $file, string $name, ?string $link = null): void
     {
         $token = ++self::$tokens;
-        $this->targets[$token] = [$file, $name];
-        $view->setContextMenu(self::items($token));
+        $this->targets[$token] = [$file, $name, $link];
+        $view->setContextMenu(self::items($token, ! is_null($link)));
     }
 
     /**
@@ -71,8 +83,12 @@ final class PictureMenu
             return false;
         }
 
-        [$file, $name] = $this->targets[(int) $match[1]];
-        $match[2] === 'save' ? $this->save($file, $name) : $this->open($file, $name);
+        [$file, $name, $link] = $this->targets[(int) $match[1]];
+        match ($match[2]) {
+            'save' => $this->save($file, $name),
+            'copy' => $this->copy((string) $link, $name),
+            default => $this->open($file, $name),
+        };
 
         return true;
     }
@@ -81,12 +97,78 @@ final class PictureMenu
      * A picture's menu, in the menu profile's item format.
      * @return list<array{id: string, label: string}>
      */
-    public static function items(int $token): array
+    public static function items(int $token, bool $link): array
     {
-        return [
-            ['id' => "picture.{$token}.save", 'label' => 'Download'],
+        return array_values(array_filter([
+            ['id' => "picture.{$token}.save", 'label' => 'Save As…'],
+            $link ? ['id' => "picture.{$token}.copy", 'label' => 'Copy Link'] : null,
             ['id' => "picture.{$token}.open", 'label' => 'Open in Window'],
-        ];
+        ]));
+    }
+
+    /** Wait for save panel $id's answer: it saves $file, called $name, and reports on $screen. */
+    public static function expect(string $id, string $file, string $name, string $screen): void
+    {
+        self::$pending[$id] = [$file, $name, $screen];
+    }
+
+    /**
+     * The answer of a save panel or a failure alert this menu opened: a chosen path gets the
+     * picture; a cancel does nothing.
+     * @return bool Whether the mail was one this menu asked for.
+     */
+    public static function answered(NamedSignal $mail): bool
+    {
+        if ($mail instanceof AlertAnswered && isset(self::$alerts[$mail->id])) {
+            unset(self::$alerts[$mail->id]);
+
+            return true;
+        }
+        if (! $mail instanceof FilesChosen || ! isset(self::$pending[$mail->id])) {
+            return false;
+        }
+
+        [$file, $name, $screen] = self::$pending[$mail->id];
+        unset(self::$pending[$mail->id]);
+        $path = $mail->paths[0] ?? null;
+        if (is_null($path)) {
+            return true;
+        }
+
+        if (self::saveTo($file, $path)) {
+            self::report($screen, Outcome::DONE, "Saved {$path}.");
+
+            return true;
+        }
+
+        self::report($screen, Outcome::FAILED, "Could not save “{$name}”.");
+        $window = GlobalVariables::make()->window;
+        if (! is_null($window)) {
+            try {
+                $id = Toolkit::window()->dialogs()->alert($window, new Alert(
+                    "Could not save “{$name}”.",
+                    is_file($file) ? "Stargazer could not write {$path}." : 'The picture is no longer cached. Load it again, then save it.',
+                ));
+                self::$alerts[$id] = true;
+            } catch (Throwable) {
+                // The status bar already says it; an alert that cannot open must not end the app.
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Copy the cached $file to $path, over a file there; false when $file is gone or the copy
+     * fails. The app's error handler turns copy()'s warning into an exception, caught here.
+     */
+    public static function saveTo(string $file, string $path): bool
+    {
+        try {
+            return is_file($file) && copy($file, $path);
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**
@@ -115,22 +197,6 @@ final class PictureMenu
     }
 
     /**
-     * A path in $directory for $file_name that no file has yet: "name (2).jpg" and so on.
-     */
-    public static function freePath(string $directory, string $file_name): string
-    {
-        $path = $directory.DIRECTORY_SEPARATOR.$file_name;
-        $base = pathinfo($file_name, PATHINFO_FILENAME);
-        $extension = pathinfo($file_name, PATHINFO_EXTENSION);
-
-        for ($n = 2; file_exists($path); $n++) {
-            $path = $directory.DIRECTORY_SEPARATOR.$base." ({$n})".($extension === '' ? '' : ".{$extension}");
-        }
-
-        return $path;
-    }
-
-    /**
      * A window size for a picture of $width × $height: its own size when it fits within
      * WINDOW_MAX, else scaled down to fit, keeping its shape; never below WINDOW_MIN.
      * @return array{0: int, 1: int}
@@ -152,23 +218,33 @@ final class PictureMenu
 
     protected function save(string $file, string $name): void
     {
-        $path = self::freePath(self::downloadsDirectory(), self::fileName($name, $file));
-
-        if (! is_file($file)) {
-            $this->report(Outcome::FAILED, "“{$name}” is no longer cached; load it again to save it.");
-
+        $window = GlobalVariables::make()->window;
+        if (is_null($window)) {
             return;
         }
 
-        copy($file, $path)
-            ? $this->report(Outcome::DONE, "Saved {$path}.")
-            : $this->report(Outcome::FAILED, "Could not save {$path}.");
+        try {
+            $id = Toolkit::window()->dialogs()->saveFile($window, new SaveRequest(
+                title: "Save “{$name}”",
+                directory: self::downloadsDirectory(),
+                name: self::fileName($name, $file),
+            ));
+            self::expect($id, $file, $name, $this->screen);
+        } catch (Throwable $e) {
+            self::report($this->screen, Outcome::FAILED, "Could not open the save panel: {$e->getMessage()}");
+        }
+    }
+
+    protected function copy(string $link, string $name): void
+    {
+        Toolkit::window()->clipboard()->setText($link);
+        self::report($this->screen, Outcome::DONE, "Copied the link to “{$name}”.");
     }
 
     protected function open(string $file, string $name): void
     {
         if (! is_file($file)) {
-            $this->report(Outcome::FAILED, "“{$name}” is no longer cached; load it again to open it.");
+            self::report($this->screen, Outcome::FAILED, "“{$name}” is no longer cached; load it again to open it.");
 
             return;
         }
@@ -182,14 +258,14 @@ final class PictureMenu
             $view = $window->column('viewer');
             $view->image('picture', $file)->setScaling(ImageScaling::FIT)->fill();
             $window->present();
-            $this->report(Outcome::DONE, "Opened “{$name}” in its own window.");
+            self::report($this->screen, Outcome::DONE, "Opened “{$name}” in its own window.");
         } catch (Throwable $e) {
-            $this->report(Outcome::FAILED, "Could not open a window for “{$name}”: {$e->getMessage()}");
+            self::report($this->screen, Outcome::FAILED, "Could not open a window for “{$name}”: {$e->getMessage()}");
         }
     }
 
-    protected function report(Outcome $outcome, string $message): void
+    protected static function report(string $screen, Outcome $outcome, string $message): void
     {
-        GlobalVariables::make()->status_bar?->settle($this->screen, $outcome, $message);
+        GlobalVariables::make()->status_bar?->settle($screen, $outcome, $message);
     }
 }

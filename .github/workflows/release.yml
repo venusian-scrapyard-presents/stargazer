@@ -10,16 +10,25 @@ permissions:
 
 jobs:
   build:
-    name: Build ${{ matrix.target }}
+    name: Build ${{ matrix.target }} ${{ matrix.toolkit }}
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
           - target: macos-arm64
+            toolkit: appkit
             runner: macos-15
           - target: linux-arm64
+            toolkit: gtk
             runner: ubuntu-24.04-arm
           - target: linux-x86_64
+            toolkit: gtk
+            runner: ubuntu-24.04
+          - target: linux-arm64
+            toolkit: qt
+            runner: ubuntu-24.04-arm
+          - target: linux-x86_64
+            toolkit: qt
             runner: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -90,18 +99,18 @@ jobs:
           jq -n --arg sign "$identity" '{macos: {sign: $sign, notary_profile: "venusian"}}' > ~/.venusian/build/config.json
 
       - name: Build
-        run: .github/build-release.sh "${{ matrix.target }}" "${GITHUB_REF_NAME#v}" "${{ github.run_number }}"
+        run: .github/build-release.sh "${{ matrix.target }}" "${GITHUB_REF_NAME#v}" "${{ github.run_number }}" "${{ matrix.toolkit }}"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.target }}
+          name: ${{ matrix.target }}-${{ matrix.toolkit }}
           path: |
             build/*.dmg
             build/*.deb
           if-no-files-found: error
 
   verify:
-    name: Install on ${{ matrix.image }} ${{ matrix.target }}
+    name: Install ${{ matrix.package }} on ${{ matrix.image }} ${{ matrix.target }}
     needs: build
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -109,33 +118,67 @@ jobs:
         include:
           - image: debian:13
             target: linux-arm64
+            toolkit: gtk
+            package: stargazer
             runner: ubuntu-24.04-arm
           - image: ubuntu:24.04
             target: linux-arm64
+            toolkit: gtk
+            package: stargazer
             runner: ubuntu-24.04-arm
           - image: ubuntu:24.04
             target: linux-x86_64
+            toolkit: gtk
+            package: stargazer
+            runner: ubuntu-24.04
+          - image: debian:13
+            target: linux-arm64
+            toolkit: qt
+            package: stargazer-qt
+            runner: ubuntu-24.04-arm
+          - image: ubuntu:24.04
+            target: linux-arm64
+            toolkit: qt
+            package: stargazer-qt
+            runner: ubuntu-24.04-arm
+          - image: ubuntu:24.04
+            target: linux-x86_64
+            toolkit: qt
+            package: stargazer-qt
             runner: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v8
         with:
-          name: ${{ matrix.target }}
+          name: ${{ matrix.target }}-${{ matrix.toolkit }}
           path: package
 
-      - name: Install the .deb, resolve its libraries and boot the app
+      - name: Install the .deb, resolve its libraries, boot the app and open its window
         run: |
-          docker run --rm -v "$PWD/package:/package:ro" "${{ matrix.image }}" bash -euo pipefail -c '
+          docker run --rm -e PACKAGE="${{ matrix.package }}" -v "$PWD/package:/package:ro" "${{ matrix.image }}" bash -euo pipefail -c '
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get install -y /package/*.deb
-            unresolved="$(ldd /usr/lib/stargazer/stargazer | grep "not found" || true)"
+            unresolved="$(ldd "/usr/lib/$PACKAGE/$PACKAGE" | grep "not found" || true)"
             if [ -n "$unresolved" ]; then
               echo "$unresolved"
               exit 1
             fi
             mkdir -p /tmp/home
             HOME=/tmp/home XDG_DATA_HOME=/tmp/home/.local/share \
-              /usr/lib/stargazer/stargazer phar:///usr/lib/stargazer/stargazer.phar/.venusian-boot-check.php | tee /tmp/boot.log
+              "/usr/lib/$PACKAGE/$PACKAGE" "phar:///usr/lib/$PACKAGE/$PACKAGE.phar/.venusian-boot-check.php" | tee /tmp/boot.log
             tail -n 1 /tmp/boot.log | grep -q "\"booted\":true"
+
+            # The boot check opens no window. Start the app for real under Xvfb: a toolkit
+            # that cannot open its windows ends the app before "Application started".
+            DEBIAN_FRONTEND=noninteractive apt-get install -y xvfb xauth > /dev/null
+            set +e
+            HOME=/tmp/home XDG_DATA_HOME=/tmp/home/.local/share \
+              timeout --kill-after=5 30 xvfb-run -a "/usr/bin/$PACKAGE" > /tmp/window.log 2>&1
+            code=$?
+            set -e
+            tail -n 20 /tmp/window.log
+            grep -q "Application started" /tmp/window.log || { echo "The main window did not open."; exit 1; }
+            if grep -qE "Exception|not supported" /tmp/window.log; then echo "The app failed after opening."; exit 1; fi
+            [ "$code" = 124 ] || { echo "The app exited ($code) before the 30 s run ended."; exit 1; }
           '
 
   release:
@@ -161,8 +204,10 @@ jobs:
           | macOS 14 or newer, Apple Silicon | \`stargazer-${version}-macos-arm64.dmg\` |
           | Ubuntu 24.04 or newer, Debian 13, Raspberry Pi OS trixie, on arm64 | \`stargazer_${version}_arm64.deb\` |
           | Ubuntu 24.04 or newer, Debian 13, on x86_64 | \`stargazer_${version}_amd64.deb\` |
+          | Same, with Qt instead of GTK, on arm64 | \`stargazer-qt_${version}_arm64.deb\` |
+          | Same, with Qt instead of GTK, on x86_64 | \`stargazer-qt_${version}_amd64.deb\` |
 
-          Install a \`.deb\` with \`sudo apt install ./stargazer_${version}_<arch>.deb\`.
+          Install a \`.deb\` with \`sudo apt install ./stargazer_${version}_<arch>.deb\`, or \`./stargazer-qt_${version}_<arch>.deb\` for Qt. The two install side by side.
           EOF
           )"
           if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then

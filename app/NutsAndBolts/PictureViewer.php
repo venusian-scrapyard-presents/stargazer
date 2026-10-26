@@ -6,8 +6,14 @@ use Closure;
 use Surface\Contracts\Drawing\RenderingEngine;
 use Surface\Contracts\Framebuffers\Filter;
 use Surface\Contracts\Framebuffers\Framebuffer;
+use Surface\Contracts\HumanInput\MouseButton;
 use Surface\Contracts\Windows\Mail\View\ButtonClicked;
 use Surface\Contracts\Windows\Mail\View\CanvasClicked;
+use Surface\Contracts\Windows\Mail\View\CanvasDragged;
+use Surface\Contracts\Windows\Mail\View\CanvasPressed;
+use Surface\Contracts\Windows\Mail\View\CanvasReleased;
+use Surface\Contracts\Windows\Mail\View\CanvasWheeled;
+use Surface\Contracts\Windows\Mail\View\PrimitiveMail;
 use Surface\Contracts\Windows\Primitives\TKButton;
 use Surface\Contracts\Windows\Primitives\TKCanvas;
 use Surface\Contracts\Windows\Primitives\TKColumn;
@@ -20,7 +26,8 @@ use Voyager\Contracts\Signals\NamedSignal;
 /**
  * A picture you can zoom into: decoded once by app('images'), drawn by VelvetGE on a canvas at
  * whatever scale the view asks for. A click zooms in twice at the point clicked; Zoom out and Fit
- * step back. Zooming past the picture's own pixels asks, once per picture, for a sharper copy
+ * step back. A left-button drag moves the picture; the wheel zooms about the view's centre; a
+ * trackpad scroll moves the picture, or zooms with ⌘/Ctrl held. Zooming past the picture's own pixels asks, once per picture, for a sharper copy
  * (the page's $sharper hook), which replaces it in place without moving the view. A picture
  * too big for the memory left is never decoded; the view keeps what it has.
  */
@@ -64,6 +71,9 @@ final class PictureViewer
     /** Whether this picture already asked for a sharper copy. */
     protected bool $asked = false;
 
+    /** @var array{0: float, 1: float}|null The last point of a held left-button drag, in points. */
+    protected ?array $drag = null;
+
     /**
      * @param Closure|null $sharper (string $file): void — the shown file wants a sharper copy; the
      *                              page fetches one and hands it to sharpen(), or does nothing.
@@ -74,6 +84,7 @@ final class PictureViewer
         $this->root->fill();
         $this->canvas = $this->root->canvas('canvas');
         $this->canvas->fill()->minSize(480, 300);
+        $this->canvas->watchPointer();
 
         $controls = $this->root->row('controls', 8);
         $this->zoom_out = $controls->button('zoom-out', 'Zoom out');
@@ -172,13 +183,20 @@ final class PictureViewer
     }
 
     /**
-     * View mail: a click on the canvas zooms in there; Zoom out and Fit step back.
+     * View mail: a click on the canvas zooms in there, a drag moves the picture, the wheel zooms or
+     * moves it; Zoom out and Fit step back.
      * @return bool Whether it was this viewer's.
      */
     public function handles(NamedSignal $mail): bool
     {
+        $mine = $mail instanceof PrimitiveMail && $mail->uuid() === $this->canvas->uuid();
+
         return match (true) {
-            $mail instanceof CanvasClicked && $mail->uuid() === $this->canvas->uuid() => $this->zoomAt($mail->x, $mail->y, 2.0),
+            $mine && $mail instanceof CanvasClicked => $this->zoomAt($mail->x, $mail->y, 2.0),
+            $mine && $mail instanceof CanvasPressed => $this->press($mail),
+            $mine && $mail instanceof CanvasDragged => $this->dragTo($mail->x, $mail->y),
+            $mine && $mail instanceof CanvasReleased => $this->release(),
+            $mine && $mail instanceof CanvasWheeled => $this->wheel($mail),
             $mail instanceof ButtonClicked && $mail->uuid() === $this->zoom_out->uuid() => $this->zoomAt(null, null, 0.5),
             $mail instanceof ButtonClicked && $mail->uuid() === $this->fit->uuid() => $this->refit(),
             default => false,
@@ -239,6 +257,56 @@ final class PictureViewer
         }
 
         return true;
+    }
+
+    protected function press(CanvasPressed $mail): bool
+    {
+        $this->drag = self::pans($mail->button) ? [$mail->x, $mail->y] : null;
+
+        return true;
+    }
+
+    /** Move by the distance from the last point, so a sharper copy landing mid-drag keeps in step. */
+    protected function dragTo(float $x, float $y): bool
+    {
+        if (! is_null($this->drag)) {
+            $this->panBy($x - $this->drag[0], $y - $this->drag[1]);
+            $this->drag = [$x, $y];
+        }
+
+        return true;
+    }
+
+    protected function release(): bool
+    {
+        $this->drag = null;
+
+        return true;
+    }
+
+    protected function wheel(CanvasWheeled $mail): bool
+    {
+        if ($mail->precise && ! Primary::held($mail->modifiers)) {
+            $this->panBy(-$mail->dx, -$mail->dy);
+
+            return true;
+        }
+
+        return $this->zoomAt(null, null, self::wheelFactor($mail->dy, $mail->precise));
+    }
+
+    /** Move the picture with a pointer move of ($dx, $dy) points; the clamp holds a fitted one still. */
+    protected function panBy(float $dx, float $dy): void
+    {
+        if (is_null($this->picture) || is_null($this->framebuffer)) {
+            return;
+        }
+
+        $scale = $this->pixelScale();
+        $this->centre_x = self::panned($this->centre_x, $dx, $scale, $this->zoom);
+        $this->centre_y = self::panned($this->centre_y, $dy, $scale, $this->zoom);
+        $this->clamp();
+        $this->paint();
     }
 
     protected function refit(): bool
@@ -307,13 +375,34 @@ final class PictureViewer
         $this->dirty = true;
 
         $this->readout->setText(is_null($picture) ? '' : sprintf(
-            '%d × %d · %d%% · click to zoom in',
+            '%d × %d · %d%% · click or scroll to zoom, drag to move',
             $picture->viewportWidth(),
             $picture->viewportHeight(),
             (int) round($zoom * 100),
         ));
         $this->zoom_out->setEnabled(! is_null($picture) && ! $this->fitted);
         $this->fit->setEnabled(! is_null($picture) && ! $this->fitted);
+    }
+
+    /** Whether a press of $button moves the picture: the left button only; the right opens its menu. */
+    public static function pans(MouseButton $button): bool
+    {
+        return $button === MouseButton::LEFT;
+    }
+
+    /**
+     * A centre moved against a pointer move of $delta points: $scale device pixels per point, at
+     * $zoom canvas pixels per picture pixel.
+     */
+    public static function panned(float $centre, float $delta, float $scale, float $zoom): float
+    {
+        return $centre - $delta * $scale / $zoom;
+    }
+
+    /** The zoom factor of a wheel turn: 1.25 per notch, 1.01 per trackpad point; down zooms out. */
+    public static function wheelFactor(float $dy, bool $precise): float
+    {
+        return ($precise ? 1.01 : 1.25) ** -$dy;
     }
 
     /** A file decoded, unless its pixels would not fit in the memory left. */

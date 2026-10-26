@@ -43,6 +43,7 @@ trait GIBSContent
         }
 
         $this->canvas = $root->canvas('map');
+        $this->canvas->watchPointer();
         $this->canvas->fill();
         $this->canvas->minSize(480, 300);
 

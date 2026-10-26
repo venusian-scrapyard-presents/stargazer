@@ -39,11 +39,11 @@ class DispatchController
 
             $routes->current($key);
             ($bag->tabs[$key] ?? null)?->setPressed(true);
-            $bag->status_bar->focus($key);
-
             /** @var StargazerController $screen */
             $screen = $routes[$key];
             $bag->window->setMenuBar($screen->menu());
+            // A new menu bar starts with every item enabled: the focus paint sets Refresh after it.
+            $bag->status_bar->focus($key);
             $screen->mount($bag->deck);
             $screen->show();
         }

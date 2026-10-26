@@ -5,7 +5,10 @@ namespace App\Actions\Work;
 use App\Runner\Controllers\StargazerController;
 use Closure;
 use App\GlobalVariables;
+use App\NutsAndBolts\PictureMenu;
+use App\RouteMap;
 use ReflectionException;
+use Surface\Contracts\Windows\Mail\MenuActivated;
 use Surface\Contracts\Windows\Mail\WindowResized;
 use Surface\Contracts\Windows\Mail\View\Toggled;
 use Voyager\Contracts\Signals\NamedSignal;
@@ -45,7 +48,18 @@ class DeliverMail
             elseif(! is_null($route = $this->tabRoute($mail)))
             {
                 $this->navigate($route);
-                $controller = $this->bag->controllers()->get($this->bag->controllers()->currentRoute());
+                $current_route = $this->bag->controllers()->currentRoute();
+                $controller = $this->bag->controllers()->get($current_route);
+            }
+            elseif (PictureMenu::answered($mail))
+            {
+                // A save panel's or its alert's answer: the menu that asked takes it.
+            }
+            elseif ($mail instanceof MenuActivated && $mail->item === 'refresh')
+            {
+                if (RouteMap::canRefresh($current_route, $this->bag->status_bar->isBusy($current_route))) {
+                    $controller->refresh();
+                }
             }
             else
             {
@@ -76,15 +90,15 @@ class DeliverMail
 
     /**
      * A tab click opens its route. A toggle button unpresses on a second click, so the current
-     * route's tab is pressed again; while the key form runs, the tabs stay put.
+     * route's tab is pressed again.
      * @throws ReflectionException
      */
     private function navigate(string $route): void
     {
         $current = $this->bag->controllers()->currentRoute();
 
-        if ($current === 'key' || $route === $current) {
-            $this->bag->tabs[$route]->setPressed($route === $current);
+        if ($route === $current) {
+            $this->bag->tabs[$route]->setPressed(true);
 
             return;
         }

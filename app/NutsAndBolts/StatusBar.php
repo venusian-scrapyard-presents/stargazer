@@ -3,6 +3,7 @@
 namespace App\NutsAndBolts;
 
 use App\Enums\Outcome;
+use Closure;
 use Surface\NutsAndBolts\Color;
 use Surface\Contracts\Windows\Primitives\TKLabel;
 
@@ -17,9 +18,14 @@ final class StatusBar
 
     protected string $active = '';
 
+    /**
+     * @param Closure|null $changed (string $screen, bool $busy): void — the shown screen and whether
+     *                              it has a run in flight, after each paint.
+     */
     public function __construct(
         protected Busy $busy,
         protected TKLabel $label,
+        protected ?Closure $changed = null,
     ) {}
 
     public function focus(string $screen): void
@@ -32,6 +38,11 @@ final class StatusBar
     {
         $this->states[$screen] = [true, Outcome::DONE, $message];
         $this->paint();
+    }
+
+    public function isBusy(string $screen): bool
+    {
+        return $this->states[$screen][0] ?? false;
     }
 
     public function settle(string $screen, Outcome $outcome, string $message): void
@@ -47,5 +58,8 @@ final class StatusBar
         $this->busy->set($busy);
         $this->label->setText($message);
         $this->label->setTextColor($outcome->isError() ? Color::hex('#d9534f') : null);
+        if (! is_null($this->changed)) {
+            ($this->changed)($this->active, $busy);
+        }
     }
 }

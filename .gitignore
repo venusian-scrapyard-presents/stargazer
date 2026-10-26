@@ -12,3 +12,4 @@
 /storage/*.key
 /vendor
 Thumbs.db
+/.brief/

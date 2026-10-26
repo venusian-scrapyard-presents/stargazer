@@ -10,12 +10,16 @@ $edit = ['label' => 'Edit', 'items' => [
     ['role' => 'paste', 'label' => 'Paste'],
     ['role' => 'select-all', 'label' => 'Select All'],
 ]];
+// Re-runs the shown screen; greyed while it runs, and on the key screen.
+$view = ['label' => 'View', 'items' => [
+    ['id' => 'refresh', 'label' => 'Refresh', 'keys' => 'Primary+R'],
+]];
 
 return [
     'about' => [
         'name' => env('APP_NAME', 'Venusian'),
         'version' => env('APP_VERSION'),
-        'copyright' => null,
+        'copyright' => \App\NutsAndBolts\Links::credit((int) date('Y')),
     ],
 
     // Shown on macOS when none of our windows has focus. Null = empty bar.
@@ -29,6 +33,7 @@ return [
                 ['role' => 'quit', 'label' => 'Quit', 'hotkey' => 'q'],
             ]],
             $edit,
+            $view,
         ],
         'apod' => [
             ['label' => 'App', 'items' => [
@@ -37,10 +42,10 @@ return [
                 ['role' => 'quit', 'label' => 'Quit', 'hotkey' => 'q'],
             ]],
             $edit,
+            $view,
             ['label' => 'APOD', 'items' => [
                 ['id' => 'grid', 'label' => 'Show Grid', 'toggle' => true, 'on' => false],
             ]],
-            //['label' => 'View', 'items' => []],
         ],
         'apod-gallery' => [
             ['label' => 'App', 'items' => [
@@ -49,10 +54,10 @@ return [
                 ['role' => 'quit', 'label' => 'Quit', 'hotkey' => 'q'],
             ]],
             $edit,
+            $view,
             ['label' => 'APOD', 'items' => [
                 ['id' => 'single', 'label' => 'Show Single Date', 'toggle' => true, 'on' => false],
             ]],
-            //['label' => 'View', 'items' => []],
         ]
     ],
 ];

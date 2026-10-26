@@ -42,6 +42,12 @@ abstract class StargazerController
         }
     }
 
+    /** After a reset: the next show runs refresh() again, as a first open does. */
+    public function reset(): void
+    {
+        $this->opened = false;
+    }
+
     public function hide(): void
     {
         $this->root?->hide();

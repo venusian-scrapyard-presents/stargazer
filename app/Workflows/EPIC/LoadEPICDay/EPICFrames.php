@@ -17,7 +17,7 @@ use Voyager\Workflows\SharedBag;
 /**
  * A day of EPIC frames, four downloads in flight, each retried on its own. The progress bar
  * moves as each settles; a frame that still fails is dropped and the day plays without it.
- * Reads 'epic_images'; writes 'epic_frames' as [file, record] pairs in the day's order.
+ * Reads 'epic_images'; writes 'epic_frames' as [file, record, collection] in the day's order.
  */
 class EPICFrames extends AsyncParallelBatchNode
 {
@@ -85,11 +85,11 @@ class EPICFrames extends AsyncParallelBatchNode
 
     public function postAsync(SharedBag $shared, mixed $prepRes, mixed $execRes): mixed
     {
-        // Keep each frame beside its image record, in the day's order.
+        // Keep each frame beside its image record and the collection it came from, in the day's order.
         $shared->epic_frames = [];
         foreach ($execRes ?? [] as $i => $path) {
             if (! is_null($path)) {
-                $shared->epic_frames[] = [$path, $shared->epic_images[$i]];
+                $shared->epic_frames[] = [$path, $shared->epic_images[$i], $this->collection];
             }
         }
 

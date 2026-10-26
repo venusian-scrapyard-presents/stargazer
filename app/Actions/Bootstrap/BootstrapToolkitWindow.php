@@ -61,7 +61,8 @@ class BootstrapToolkitWindow
     protected static function buildLayout(GlobalVariables $bag, TKColumn $container, TKRow $body): array
     {
         $sidebar = static::createSidebar($body);
-        $body->separator('divider', horizontal: false);
+        $bag->sidebar = $sidebar;
+        $bag->divider = $body->separator('divider', horizontal: false);
 
         static::createContentDeck($bag, $body);
         $container->separator('rule');
@@ -124,7 +125,13 @@ class BootstrapToolkitWindow
 
         $bag->status_bar = new StatusBar(
             static::busyIn($footer, 'busy'),
-            $message
+            $message,
+            // The main window's bar, and the default bar macOS shows over picture windows.
+            changed: function (string $screen, bool $busy) use ($bag): void {
+                $enabled = RouteMap::canRefresh($screen, $busy);
+                $bag->window->setItemEnabled('refresh', $enabled);
+                Toolkit::window()->setItemEnabled('refresh', $enabled);
+            },
         );
 
         return $footer;

@@ -5,8 +5,9 @@ namespace App\Runner\Controllers;
 use App\GlobalVariables;
 use App\Services\EPIC\EPICService;
 use App\Workflows\EPIC\LoadEPICDay\LoadEPICDayStart;
+use Surface\Contracts\Windows\Mail\MenuActivated;
 use Surface\Contracts\Windows\Mail\View\ButtonClicked;
-use Surface\Contracts\Windows\Mail\View\ValueChanged;
+use Surface\Contracts\Windows\Mail\View\SelectionChanged;
 use Surface\Contracts\Windows\Primitives\TKColumn;
 use Surface\Contracts\Windows\ToolkitWindow;
 use Voyager\Contracts\Signals\NamedSignal;
@@ -60,17 +61,27 @@ class EPICController extends StargazerController
         return match (true) {
             // The Load button always asks for the day the picker shows.
             $mail instanceof ButtonClicked && $this->service->isLoad($mail->uuid()) => $this->load($this->service->pickedDate()),
-            $mail instanceof ValueChanged && $this->service->isScrub($mail->uuid()) => $this->service->scrubTo($mail->value),
+            $mail instanceof ButtonClicked && $this->service->isPlayer($mail->uuid()) => $this->service->pressed($mail->uuid()),
+            $mail instanceof SelectionChanged && $this->service->isSpeed($mail->uuid()) => $this->service->speedChosen($mail->index),
+            $mail instanceof MenuActivated => $this->service->menuActivated($mail),
             default => false,
         };
     }
 
     /**
-     * Every frame: the shown frame follows its canvas and shows what changed.
+     * Every frame: the day plays on, and the shown frame follows its canvas and shows what
+     * changed.
      */
     public function tick(): void
     {
+        $this->service->play();
         $this->service->viewer()->tick();
+    }
+
+    public function hide(): void
+    {
+        $this->service->pause();
+        parent::hide();
     }
 
     protected function load(?string $date): bool

@@ -2,6 +2,7 @@
 
 namespace App\Runner\Controllers;
 
+use App\GlobalVariables;
 use App\Services\Settings\KeyService;
 use ReflectionException;
 use Surface\Contracts\Windows\Mail\View\ButtonClicked;
@@ -11,7 +12,7 @@ use Surface\Contracts\Windows\ToolkitWindow;
 use Voyager\Contracts\Signals\NamedSignal;
 
 /**
- * Runs first while no NASA key is stored. It has no sidebar tab.
+ * Runs first while no NASA key is stored. It has no sidebar tab, and hides the sidebar while it shows.
  */
 class KeyController extends StargazerController
 {
@@ -40,6 +41,25 @@ class KeyController extends StargazerController
 
     public function refresh(): void {}
 
+    public function show(): void
+    {
+        $this->showSidebar(false);
+        parent::show();
+    }
+
+    public function hide(): void
+    {
+        parent::hide();
+        $this->showSidebar(true);
+    }
+
+    private function showSidebar(bool $visible): void
+    {
+        $bag = GlobalVariables::make();
+        $bag->sidebar?->setVisible($visible);
+        $bag->divider?->setVisible($visible);
+    }
+
     public function index(TKColumn $root): void
     {
         $this->service->mounted($root);
@@ -51,6 +71,7 @@ class KeyController extends StargazerController
     public function deliver(NamedSignal $mail): bool
     {
         return match (true) {
+            $mail instanceof ButtonClicked && $this->service->isDemo($mail->uuid()) => $this->service->useDemo(),
             $mail instanceof ButtonClicked && $this->service->isSave($mail->uuid()),
             $mail instanceof TextSubmitted && $this->service->isKeyInput($mail->uuid()) => $this->service->save(),
             default => false,

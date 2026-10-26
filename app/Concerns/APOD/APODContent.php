@@ -159,7 +159,7 @@ trait APODContent
         $controls = $this->gallery->row('controls', 10);
         $this->count = $controls->slider('count', 1, 12, 6);
         $this->count->minSize(220, 0);
-        $this->count_label = $controls->label('count-label', '6 pictures');
+        $this->count_label = $controls->label('count-label', self::countLabel(6));
         $this->gallery_load = $controls->button('load', 'Load gallery');
         $this->gallery_menu = new PictureMenu('apod');
         $scroll = $this->gallery->scrollView('cells');

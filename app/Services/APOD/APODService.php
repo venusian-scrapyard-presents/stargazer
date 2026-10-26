@@ -21,6 +21,7 @@ use Surface\Contracts\Windows\Primitives\TKLabel;
 use Voyager\NutsAndBolts\Collection;
 use Surface\Contracts\Windows\Mail\MenuToggled;
 use Surface\Contracts\Windows\Mail\MenuActivated;
+use Surface\Contracts\Windows\Mail\View\ValueChanged;
 use Surface\Contracts\Windows\Mail\View\ButtonClicked;
 use Surface\Contracts\Windows\Mail\View\DateChanged;
 use Surface\Contracts\Windows\Mail\View\Toggled;
@@ -46,6 +47,9 @@ class APODService extends NasaService
 
     /** @var array<int, string> Gallery cell index => its picture's name, for the right-click menu. */
     protected array $cell_names = [];
+
+    /** @var array<int, ?string> Gallery cell index => its picture's article, for Copy Link. */
+    protected array $cell_links = [];
 
     /** The day the single view is showing, captioned. */
     protected ?AstronomyPicture $current = null;
@@ -136,6 +140,31 @@ class APODService extends NasaService
         return ! is_null($mode);
     }
 
+    /** The gallery count as its label reads it: "1 picture", "6 pictures". */
+    public static function countLabel(int $count): string
+    {
+        return $count === 1 ? '1 picture' : "{$count} pictures";
+    }
+
+    /** The status line of a loaded gallery: "1 picture, … ; 1 preview loaded." */
+    public static function galleryDone(int $pictures, string $first, string $last, int $previews): string
+    {
+        return sprintf('%s, %s to %s; %d %s loaded.', self::countLabel($pictures), $first, $last, $previews, $previews === 1 ? 'preview' : 'previews');
+    }
+
+    public function isCount(string $uuid): bool
+    {
+        return $uuid === $this->count?->uuid();
+    }
+
+    /** The gallery slider moved: its label follows. */
+    public function countChanged(ValueChanged $mail): bool
+    {
+        $this->count_label->setText(self::countLabel((int) round($mail->value)));
+
+        return true;
+    }
+
     /**
      * How many days the gallery asks for: the slider's value.
      * @return int
@@ -179,6 +208,7 @@ class APODService extends NasaService
             $this->open_dates[$open->uuid()] = $picture->date;
             $this->cell_views[$i] = [$thumb, $caption];
             $this->cell_names[$i] = self::pictureName($picture);
+            $this->cell_links[$i] = $picture->permalink;
 
             $url = $picture->media_type === 'image' ? $picture->url : $picture->thumbnail_url;
             if (! is_null($url)) {
@@ -207,14 +237,14 @@ class APODService extends NasaService
         }
 
         $thumb->setFile($path);
-        $this->gallery_menu->target($thumb, $path, $this->cell_names[$index]);
+        $this->gallery_menu->target($thumb, $path, $this->cell_names[$index], $this->cell_links[$index] ?? null);
     }
 
     public function galleryLoaded(GlobalVariables $bag): void
     {
         $first = $bag->pictures->first()?->date;
         $last = $bag->pictures->last()?->date;
-        $this->done($bag, sprintf('%d pictures, %s to %s; %d previews loaded.', $bag->pictures->count(), $first, $last, count($bag->thumbnails)));
+        $this->done($bag, self::galleryDone($bag->pictures->count(), (string) $first, (string) $last, count($bag->thumbnails)));
     }
 
     /**
@@ -236,6 +266,7 @@ class APODService extends NasaService
         $this->open_dates = [];
         $this->cell_views = [];
         $this->cell_names = [];
+        $this->cell_links = [];
         $this->gallery_menu->clear();
     }
 
@@ -312,7 +343,7 @@ class APODService extends NasaService
             return;
         }
         if (! is_null($this->current)) {
-            $this->single_menu->target($this->picture->view(), $file, self::pictureName($this->current));
+            $this->single_menu->target($this->picture->view(), $file, self::pictureName($this->current), $this->current->permalink);
         }
     }
 
@@ -344,7 +375,7 @@ class APODService extends NasaService
                     return;
                 }
                 $this->single_menu->clear();
-                $this->single_menu->target($this->picture->view(), $path, self::pictureName($picture).' (HD)');
+                $this->single_menu->target($this->picture->view(), $path, self::pictureName($picture).' (HD)', $picture->permalink);
                 $status?->settle($this->key(), Outcome::DONE, "{$picture->date}: {$picture->title} (HD)");
             })
             ->error(fn () => $status?->settle($this->key(), Outcome::FAILED, 'The HD picture could not be downloaded; zooming the standard one.'));
@@ -374,7 +405,7 @@ class APODService extends NasaService
         $shown = ! is_null($thumbnail) && $this->picture->show($thumbnail);
         $this->picture->setVisible($shown);
         if ($shown && ! is_null($this->current)) {
-            $this->single_menu->target($this->picture->view(), $thumbnail, self::pictureName($this->current).' (preview)');
+            $this->single_menu->target($this->picture->view(), $thumbnail, self::pictureName($this->current).' (preview)', $this->current->permalink);
         }
         $this->link->setText("Watch: {$url}")->show();
     }

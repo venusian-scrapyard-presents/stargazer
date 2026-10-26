@@ -69,6 +69,12 @@ class RouteMap extends Collection
         return in_array($key, static::$pinned, true);
     }
 
+    /** Whether Refresh can run $route now: not while it runs, and never on a route without a tab. */
+    public static function canRefresh(string $route, bool $busy): bool
+    {
+        return ! $busy && ! array_key_exists($route, static::$hidden);
+    }
+
     public static function firstRoute(): string
     {
         return array_key_first(static::$routes);

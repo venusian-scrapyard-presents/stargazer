@@ -5,6 +5,7 @@ namespace App\Runner\Controllers;
 use App\Services\GIBS\GIBSService;
 use Surface\Contracts\Windows\Mail\View\ButtonClicked;
 use Surface\Contracts\Windows\Mail\View\DateChanged;
+use Surface\Contracts\Windows\Mail\View\PrimitiveMail;
 use Surface\Contracts\Windows\Mail\View\SelectionChanged;
 use Surface\Contracts\Windows\Primitives\TKColumn;
 use Surface\Contracts\Windows\ToolkitWindow;
@@ -50,6 +51,7 @@ class GIBSController extends StargazerController
         $service = $this->service;
 
         return match (true) {
+            $mail instanceof PrimitiveMail && $service->isMap($mail->uuid()) => $service->pointer($mail),
             $mail instanceof SelectionChanged && $service->isProjection($mail->uuid()) => $service->changed('projection'),
             $mail instanceof SelectionChanged && $service->isLayer($mail->uuid()) => $service->changed('layer'),
             $mail instanceof SelectionChanged && $service->isOverlay($mail->uuid()) => $service->changed('overlay'),

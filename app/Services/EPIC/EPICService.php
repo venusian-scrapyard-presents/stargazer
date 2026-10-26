@@ -4,7 +4,10 @@ namespace App\Services\EPIC;
 
 use App\Concerns\EPIC\EPICContent;
 use App\GlobalVariables;
+use App\NutsAndBolts\FramePlayer;
 use App\NutsAndBolts\PictureViewer;
+use ProjectSaturnStudios\Stargazer\EPIC\Enums\EpicImageType;
+use Surface\Contracts\Windows\Mail\MenuActivated;
 use App\Services\NasaService;
 use DateTimeImmutable;
 use ProjectSaturnStudios\Stargazer\EPIC\DataObjects\EpicImage;
@@ -13,8 +16,8 @@ use Surface\Contracts\Windows\Primitives\TKColumn;
 use Voyager\NutsAndBolts\Collection;
 
 /**
- * DSCOVR's EPIC camera: a day of whole-Earth frames, downloaded side by side, scrubbed with a
- * slider so the planet turns.
+ * DSCOVR's EPIC camera: a day of whole-Earth frames, downloaded side by side, played in a loop
+ * so the planet turns.
  */
 class EPICService extends NasaService
 {
@@ -70,9 +73,10 @@ class EPICService extends NasaService
         return $uuid === $this->load?->uuid();
     }
 
-    public function isScrub(string $uuid): bool
+    /** Whether $uuid is one of the player's buttons. */
+    public function isPlayer(string $uuid): bool
     {
-        return $uuid === $this->scrub?->uuid();
+        return in_array($uuid, [$this->previous?->uuid(), $this->play?->uuid(), $this->next?->uuid()], true);
     }
 
     /**
@@ -94,7 +98,8 @@ class EPICService extends NasaService
         }
 
         $this->frames = [];
-        $this->scrub->disable();
+        $this->player->load(0, self::now());
+        $this->paintPlayer();
         $this->progress->setFraction(0.0)->show();
 
         return true;
@@ -106,45 +111,105 @@ class EPICService extends NasaService
     }
 
     /**
-     * The day's frames downloaded: the slider spans them, the first is shown, and the picker
-     * moves to the day EPIC answered with.
+     * The day's frames downloaded: the first is shown and the day plays, and the picker moves
+     * to the day EPIC answered with.
      */
     public function framesLoaded(GlobalVariables $bag): void
     {
         $this->loaded = true;
         $this->frames = $bag->epic_frames;
         $this->progress->hide();
-        $this->scrub->setRange(0, max(1, count($this->frames) - 1))->setValue(0)->setEnabled(count($this->frames) > 1);
+        $this->player->load(count($this->frames), self::now());
         $this->showFrame(0);
+        $this->paintPlayer();
 
         $day = substr($this->frames[0][1]->date, 0, 10);
         $this->date->setDate(new DateTimeImmutable($day));
         $missing = count($bag->epic_images) - count($this->frames);
-        $this->done($bag, sprintf('%d frames of %s%s — drag the slider to turn the Earth.', count($this->frames), $day, $missing > 0 ? " ({$missing} would not download)" : ''));
+        $this->done($bag, sprintf('%d frames of %s%s — Pause holds the Earth still, Prev and Next step it.', count($this->frames), $day, $missing > 0 ? " ({$missing} would not download)" : ''));
     }
 
-    public function scrubTo(float $value): bool
+    /** A choice from the shown frame's context menu. */
+    public function menuActivated(MenuActivated $mail): bool
     {
-        $this->showFrame((int) round($value));
+        return $this->frame_menu->activated($mail);
+    }
+
+    public function isSpeed(string $uuid): bool
+    {
+        return $uuid === $this->speed?->uuid();
+    }
+
+    /** A pick from the speed menu: index $index of FramePlayer::SPEEDS. */
+    public function speedChosen(int $index): bool
+    {
+        $seconds = array_values(FramePlayer::SPEEDS)[$index] ?? FramePlayer::STEP;
+        $this->player->setStep($seconds);
 
         return true;
     }
 
+    /** A click on one of the player's buttons. */
+    public function pressed(string $uuid): bool
+    {
+        match ($uuid) {
+            $this->previous->uuid() => $this->showFrame($this->player->previous()),
+            $this->next->uuid() => $this->showFrame($this->player->next()),
+            default => $this->player->toggle(self::now()),
+        };
+        $this->paintPlayer();
+
+        return true;
+    }
+
+    /** Every frame: the next picture of the day once it is due. */
+    public function play(): void
+    {
+        $index = $this->player->advance(self::now());
+        if (! is_null($index)) {
+            $this->showFrame($index);
+            $this->paintPlayer();
+        }
+    }
+
+    /** The screen went away: the Earth stops where it is. */
+    public function pause(): void
+    {
+        if (is_null($this->player)) {
+            return;
+        }
+
+        $this->player->pause();
+        $this->paintPlayer();
+    }
+
+    protected function paintPlayer(): void
+    {
+        $this->setPlayerEnabled($this->player->canStep());
+        $this->play->setLabel($this->player->isPlaying() ? '❚❚ Pause' : '▶ Play');
+        $this->position->setText($this->player->label());
+    }
+
+    protected static function now(): float
+    {
+        return hrtime(true) / 1e9;
+    }
+
     protected function showFrame(int $index): void
     {
-        [$file, $image] = $this->frames[$index] ?? [null, null];
+        [$file, $image, $collection] = $this->frames[$index] ?? [null, null, null];
         if (is_null($file)) {
             return;
         }
 
         $this->frame->show($file, keep_view: true);
+        $this->frame_menu->clear();
+        $this->frame_menu->target($this->frame->view(), $file, 'EPIC '.$image->date, $image->archiveUrl($collection, EpicImageType::JPG));
         $this->caption->setText(sprintf(
-            '%s UTC · centred on %.1f°, %.1f° · frame %d of %d',
+            '%s UTC · centred on %.1f°, %.1f°',
             $image->date,
             $image->centroid->lat,
             $image->centroid->lon,
-            $index + 1,
-            count($this->frames),
         ));
     }
 

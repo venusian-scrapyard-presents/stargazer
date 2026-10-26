@@ -2,6 +2,7 @@
 
 namespace App\Runner\Sketches;
 
+use Surface\Contracts\Windows\ToolkitWindow;
 use App\Actions\Work\DispatchController;
 use App\GlobalVariables;
 use App\RouteMap;
@@ -59,7 +60,9 @@ class Stargazer extends Sketch
             default => null
         };
 
-        foreach ($this->bag->controllers() as $screen) {
+        // Quit closes the windows while delivering its mail, and a red-button close removes the
+        // window's primitives a frame before its mail arrives: nothing ticks on either.
+        foreach (self::ticks($this->bag->status(), $this->bag->window) ? $this->bag->controllers() : [] as $screen) {
             if ($screen->isMounted()) {
                 $screen->tick();
             }
@@ -68,6 +71,12 @@ class Stargazer extends Sketch
         return $this->bag->status() == 'RUNNING'
             ? SketchLoopResult::CONTINUE
             : SketchLoopResult::STOP;
+    }
+
+    /** Whether the screens tick this frame: the app runs and its main window is still open. */
+    public static function ticks(string $status, ?ToolkitWindow $window): bool
+    {
+        return $status === 'RUNNING' && ($window?->isOpen() ?? false);
     }
 
     /**

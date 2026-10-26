@@ -223,8 +223,14 @@ class ImagesService extends NasaService
             return;
         }
         if (! is_null($this->current)) {
-            $this->picture_menu->target($this->picture->view(), $file, $this->current->title ?? $this->current->nasaId);
+            $this->picture_menu->target($this->picture->view(), $file, $this->current->title ?? $this->current->nasaId, self::detailsUrl($this->current));
         }
+    }
+
+    /** An item's page on images.nasa.gov, for Copy Link. */
+    protected static function detailsUrl(ImageItemData $item): string
+    {
+        return 'https://images.nasa.gov/details/'.rawurlencode($item->nasaId);
     }
 
     /** The shown picture, which sees view mail before the page does. */
@@ -273,7 +279,7 @@ class ImagesService extends NasaService
                     return;
                 }
                 $this->picture_menu->clear();
-                $this->picture_menu->target($this->picture->view(), $path, $name);
+                $this->picture_menu->target($this->picture->view(), $path, $name, self::detailsUrl($item));
                 $size = @getimagesize($path) ?: [0, 0];
                 $status?->settle($this->key(), Outcome::DONE, sprintf('%s · %d × %d', $name, $size[0], $size[1]));
             })

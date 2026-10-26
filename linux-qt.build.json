@@ -1,0 +1,31 @@
+{
+    "name": "Stargazer Qt",
+    "id": "com.venusian.stargazer.qt",
+    "summary": "NASA's picture of the day, every day",
+    "description": "Browse the Astronomy Picture of the Day by date, in HD when you want it.",
+    "author": "Angel Gonzalez <usftechacg@gmail.com>",
+    "homepage": "https://github.com/VenusianPHP",
+    "license": "GPL-3.0-only",
+    "category": "Education",
+    "icon": "art/icon.png",
+    "targets": [
+        "linux-x86_64",
+        "linux-arm64"
+    ],
+    "extensions": [
+        "pdo_sqlite",
+        "php-io-extensions/epoll",
+        "php-io-extensions/pcurl",
+        "php-io-extensions/rasterize",
+        "php-io-extensions/qt",
+        "php-io-extensions/fb",
+        "php-io-extensions/imgdec",
+        "phpredis/phpredis"
+    ],
+    "env": {
+        "TOOLKIT_BRIDGE": "qt",
+        "CACHE_STORE": "file",
+        "QUEUE_CONNECTION": "sync",
+        "APP_MEMORY_LIMIT": "512M"
+    }
+}

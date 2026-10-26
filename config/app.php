@@ -14,7 +14,7 @@ return [
     |
     */
     'name' => env('APP_NAME', 'Venusian'),
-    'id' => 'com.venusian.stargazer',
+    'id' => env('APP_ID', 'com.venusian.stargazer'),
 
     /*
     |--------------------------------------------------------------------------

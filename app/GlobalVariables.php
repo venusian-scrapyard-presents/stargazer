@@ -9,6 +9,7 @@ use Closure;
 use ProjectSaturnStudios\Stargazer\NasaClient;
 use ReflectionException;
 use Surface\Contracts\Windows\Primitives\TKColumn;
+use Surface\Contracts\Windows\Primitives\TKSeparator;
 use Voyager\Contracts\Workflows\AsyncRuntime;
 use Voyager\Workflows\AsyncRuntimeManager;
 use Voyager\Workflows\SharedBag;
@@ -35,6 +36,10 @@ class GlobalVariables extends SharedBag
     public bool $ending = false;
 
     public ?TKColumn $deck = null;
+
+    public ?TKColumn $sidebar = null;
+
+    public ?TKSeparator $divider = null;
 
     public ?StatusBar $status_bar = null;
 

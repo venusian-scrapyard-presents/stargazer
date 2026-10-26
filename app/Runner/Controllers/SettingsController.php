@@ -4,6 +4,7 @@ namespace App\Runner\Controllers;
 
 use App\Services\Settings\SettingsService;
 use ReflectionException;
+use Surface\Contracts\Windows\Mail\Services\AlertAnswered;
 use Surface\Contracts\Windows\Mail\View\ButtonClicked;
 use Surface\Contracts\Windows\Mail\View\SelectionChanged;
 use Surface\Contracts\Windows\Mail\View\TextSubmitted;
@@ -70,6 +71,8 @@ class SettingsController extends StargazerController
             $mail instanceof SelectionChanged && $this->service->isStartPage($mail->uuid()) => $this->service->chooseStartPage($mail->index),
             $mail instanceof SelectionChanged && $this->service->isStore($mail->uuid()) => $this->service->chooseStore($mail->index),
             $mail instanceof ButtonClicked && $this->service->isApplyStore($mail->uuid()) => $this->service->applyStore(),
+            $mail instanceof ButtonClicked && $this->service->isReset($mail->uuid()) => $this->service->askReset(),
+            $mail instanceof AlertAnswered && $this->service->isResetAlert($mail->id) => $this->service->resetAnswered($mail->button),
             default => false,
         };
     }

@@ -15,6 +15,7 @@ use Surface\Contracts\Windows\Mail\MenuToggled;
 use Surface\Contracts\Windows\Mail\View\ButtonClicked;
 use Surface\Contracts\Windows\Mail\View\DateChanged;
 use Surface\Contracts\Windows\Mail\View\Toggled;
+use Surface\Contracts\Windows\Mail\View\ValueChanged;
 use Surface\Contracts\Windows\ToolkitWindow;
 use Surface\Contracts\Windows\Primitives\TKColumn;
 use Voyager\Contracts\Signals\NamedSignal;
@@ -87,6 +88,7 @@ class APODController extends StargazerController
             ButtonClicked::class => $this->service->reloadDay($mail, $this),
             MenuActivated::class => $this->service->menuActivated($mail),
             MenuToggled::class => $this->service->menuReaction($mail, $this),
+            ValueChanged::class => $this->service->isCount($mail->uuid()) && $this->service->countChanged($mail),
             default => $this->defaultMail($mail),
         };
 
@@ -123,9 +125,9 @@ class APODController extends StargazerController
         $this->service->mounted($root);
     }
 
+    /** Mail no handler here takes goes on to signal(), as every other screen's does. */
     protected function defaultMail(NamedSignal $mail): bool
     {
-        dump($mail, $mail->name());
         return false;
     }
 

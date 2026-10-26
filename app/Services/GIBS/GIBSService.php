@@ -4,6 +4,8 @@ namespace App\Services\GIBS;
 
 use App\Concerns\GIBS\GIBSContent;
 use App\GlobalVariables;
+use App\NutsAndBolts\PictureViewer;
+use App\NutsAndBolts\Primary;
 use App\NutsAndBolts\GibsVectors;
 use App\Services\NasaService;
 use App\Workflows\GIBS\LoadGIBSView\LoadGIBSCapabilitiesStart;
@@ -21,6 +23,11 @@ use ProjectSaturnStudios\Stargazer\NasaClient;
 use Surface\Contracts\Drawing\RenderingEngine;
 use Surface\Contracts\Framebuffers\Framebuffer;
 use Surface\Contracts\Framebuffers\Region;
+use Surface\Contracts\Windows\Mail\View\CanvasDragged;
+use Surface\Contracts\Windows\Mail\View\CanvasPressed;
+use Surface\Contracts\Windows\Mail\View\CanvasReleased;
+use Surface\Contracts\Windows\Mail\View\CanvasWheeled;
+use Surface\Contracts\Windows\Mail\View\PrimitiveMail;
 use Surface\Contracts\Windows\Primitives\TKColumn;
 use Surface\NutsAndBolts\Color;
 use Voyager\Http\Client\Response;
@@ -32,7 +39,8 @@ use Voyager\Workflows\Flow;
  * app('images') (in C when ext-imgdec is loaded) and drawn by VelvetGE the moment it lands. Zoom
  * and pan step through the tile pyramid, so every tile pixel is one canvas pixel. A colour-mapped
  * layer gets its legend drawn over the map's corner. A vector overlay (fires, borders, dams…) is
- * drawn feature by feature as GIBS's own style says.
+ * drawn feature by feature as GIBS's own style says. A left-button drag moves the map, the wheel
+ * steps the zoom, and a trackpad scroll moves the map, or zooms with ⌘/Ctrl held.
  */
 class GIBSService extends NasaService
 {
@@ -96,6 +104,12 @@ class GIBSService extends NasaService
     protected float $centre_x = 0.0;
 
     protected float $centre_y = 0.0;
+
+    /** @var array{0: float, 1: float}|null The last point of a held left-button drag, in points. */
+    protected ?array $drag = null;
+
+    /** The part-notch the wheel turned toward the next zoom level. */
+    protected float $wheel = 0.0;
 
     protected ?Framebuffer $framebuffer = null;
 
@@ -216,6 +230,32 @@ class GIBSService extends NasaService
         return true;
     }
 
+    public function isMap(string $uuid): bool
+    {
+        return $uuid === $this->canvas?->uuid();
+    }
+
+    /**
+     * The map's pointer mail: a drag moves it, the wheel zooms it or moves it. Nothing happens
+     * before the capabilities have loaded.
+     */
+    public function pointer(PrimitiveMail $mail): bool
+    {
+        if (is_null($this->capabilities())) {
+            return true;
+        }
+
+        match (true) {
+            $mail instanceof CanvasPressed => $this->drag = PictureViewer::pans($mail->button) ? [$mail->x, $mail->y] : null,
+            $mail instanceof CanvasDragged => $this->dragTo($mail->x, $mail->y),
+            $mail instanceof CanvasReleased => $this->release(),
+            $mail instanceof CanvasWheeled => $this->wheel($mail),
+            default => null,
+        };
+
+        return true;
+    }
+
     public function navigate(string $where): bool
     {
         if (is_null($this->capabilities())) {
@@ -238,6 +278,32 @@ class GIBSService extends NasaService
         $this->load();
 
         return true;
+    }
+
+    /**
+     * A map centre moved against a pointer move of ($dx, $dy) points: $scale device pixels per
+     * point, $span map units per pixel. Map y grows north, the canvas's y south.
+     * @return array{0: float, 1: float}
+     */
+    public static function panned(float $x, float $y, float $dx, float $dy, float $scale, float $span): array
+    {
+        return [$x - $dx * $scale * $span, $y + $dy * $scale * $span];
+    }
+
+    /**
+     * Whole zoom levels in a wheel turn of $amount notches on top of the $carry left from the last
+     * turns; positive is out. A turn the other way drops the carry, so no notch is spent undoing it.
+     * @return array{0: int, 1: float} The levels, and the part-notch carried to the next turn.
+     */
+    public static function wheelLevels(float $carry, float $amount): array
+    {
+        if ($carry * $amount < 0) {
+            $carry = 0.0;
+        }
+        $total = $carry + $amount;
+        $levels = (int) $total;
+
+        return [$levels, $total - $levels];
     }
 
     /** Every sketch tick: follow the canvas's size, and show what landed since the last one. */
@@ -546,6 +612,63 @@ class GIBSService extends NasaService
         $this->overlay->setOptions(array_keys($offered));
         $this->overlay->select(max(0, (int) array_search($overlay, $this->overlays, true)));
         $this->layerChosen();
+    }
+
+    protected function dragTo(float $x, float $y): void
+    {
+        if (is_null($this->drag)) {
+            return;
+        }
+
+        $this->panBy($x - $this->drag[0], $y - $this->drag[1]);
+        $this->drag = [$x, $y];
+    }
+
+    /** The drag is over: the tiles it uncovered load on the next tick. */
+    protected function release(): void
+    {
+        $this->drag = null;
+        $this->waiting = true;
+    }
+
+    protected function wheel(CanvasWheeled $mail): void
+    {
+        if ($mail->precise && ! Primary::held($mail->modifiers)) {
+            $this->panBy(-$mail->dx, -$mail->dy);
+            $this->waiting = true;
+
+            return;
+        }
+
+        [$levels, $this->wheel] = self::wheelLevels($this->wheel, $mail->precise ? $mail->dy / 50 : $mail->dy);
+        if ($levels !== 0) {
+            // A positive dy zooms out; a higher level is deeper.
+            $this->zoomBy(-$levels);
+        }
+    }
+
+    /** Move the map with a pointer move of ($dx, $dy) points, drawing the tiles already held. */
+    protected function panBy(float $dx, float $dy): void
+    {
+        [$this->centre_x, $this->centre_y] = self::panned($this->centre_x, $this->centre_y, $dx, $dy, $this->pixelScale(), $this->matrix()->pixelSpan());
+        $this->clampCentre();
+        $this->repaint();
+    }
+
+    protected function zoomBy(int $levels): void
+    {
+        $this->zoom = max(0, min($this->deepest(), $this->zoom + $levels));
+        $this->clampCentre();
+        $this->load();
+    }
+
+    /** Device pixels per point of the canvas. */
+    private function pixelScale(): float
+    {
+        [$pixels] = $this->canvas->pixelSize();
+        [$points] = $this->canvas->size() + [0];
+
+        return $points > 0 ? $pixels / $points : 1.0;
     }
 
     /** The view that shows the whole projection, centred, at the deepest zoom it fits at. */

@@ -7,6 +7,7 @@ use App\GlobalVariables;
 use App\NutsAndBolts\CacheStore;
 use App\NutsAndBolts\NasaKey;
 use App\NutsAndBolts\RateLimit;
+use App\NutsAndBolts\Reset;
 use App\NutsAndBolts\StartPage;
 use App\RouteMap;
 use App\Runner\Controllers\StargazerController;
@@ -20,6 +21,8 @@ use Surface\Contracts\Windows\Primitives\TKRow;
 use Surface\Contracts\Windows\Primitives\TKTextInput;
 use Surface\Contracts\Windows\Styling\FontSpec;
 use Surface\Contracts\Windows\Styling\FontWeight;
+use Surface\Core\MagicAliases\Toolkit;
+use Throwable;
 
 /**
  * The NASA key and what is left of its hourly quota, the page the app opens on, and the
@@ -59,6 +62,11 @@ class SettingsService
 
     protected ?TKDropdown $start_page = null;
 
+    protected ?TKButton $reset = null;
+
+    /** The id of the open reset alert; null while none is open. */
+    protected ?string $reset_alert = null;
+
     /** @var list<string> The start-page choice behind each dropdown option, in order. */
     protected array $choices = [];
 
@@ -73,7 +81,7 @@ class SettingsService
 
         $root->label('key-heading', 'NASA API key')->setFont(new FontSpec(15, FontWeight::BOLD));
         $key_row = $root->row('key-form', 10);
-        $this->key = $key_row->textInput('key', '');
+        $this->key = $key_row->textInput('key', '', secret: true);
         $this->key->minSize(360, 0);
         $this->save_key = $key_row->button('save-key', 'Save key');
         $this->rate = $root->label('rate', RateLimit::describe(null));
@@ -107,6 +115,12 @@ class SettingsService
         $this->redis->hide();
         $this->store_note = $root->label('store-note', '');
         $this->store_note->setWrap(true);
+
+        $root->label('reset-heading', 'Reset')->setFont(new FontSpec(15, FontWeight::BOLD));
+        $reset_row = $root->row('reset-form', 10);
+        $this->reset = $reset_row->button('reset', 'Clear data and reset…');
+        $reset_row->label('reset-note', 'Removes the saved key, the cached days and pictures, the cache store and the start page, then shows the welcome screen.')
+            ->setWrap(true);
 
         // The credit sits at the bottom, centred: an empty column takes the spare height above it.
         $root->column('spacer')->fill(false, true);
@@ -155,6 +169,58 @@ class SettingsService
         if (microtime(true) - $this->rate_read_at >= self::RATE_EVERY) {
             $this->showRate();
         }
+    }
+
+    public function isReset(string $uuid): bool
+    {
+        return $uuid === $this->reset?->uuid();
+    }
+
+    public function isResetAlert(string $id): bool
+    {
+        return ! is_null($this->reset_alert) && $id === $this->reset_alert;
+    }
+
+    /**
+     * The Reset button: ask first. The alert is a sheet on the main window.
+     * @throws ReflectionException
+     */
+    public function askReset(): bool
+    {
+        $window = GlobalVariables::make()->window;
+        if (is_null($window) || ! is_null($this->reset_alert)) {
+            return true;
+        }
+
+        try {
+            $this->reset_alert = Toolkit::window()->dialogs()->alert($window, Reset::alert());
+        } catch (Throwable $e) {
+            GlobalVariables::make()->status_bar->settle($this->key(), Outcome::FAILED, "The reset could not ask first: {$e->getMessage()}");
+        }
+
+        return true;
+    }
+
+    /**
+     * The alert's answer: Reset clears and resets; anything else leaves everything as it is.
+     * @throws ReflectionException
+     */
+    public function resetAnswered(int $button): bool
+    {
+        $this->reset_alert = null;
+        if (! Reset::confirmed($button)) {
+            return true;
+        }
+
+        $problems = Reset::run();
+        $this->key->setValue('');
+        if ($problems !== []) {
+            GlobalVariables::make()->status_bar->settle($this->key(), Outcome::FAILED, implode(' ', $problems));
+        } else {
+            $this->settled('Stargazer was reset.');
+        }
+
+        return true;
     }
 
     public function isStore(string $uuid): bool

@@ -8,7 +8,7 @@
         "framework",
         "skeleton"
     ],
-    "version": "0.10.0",
+    "version": "0.10.1",
     "license": "GPL-3.0-only",
     "require": {
         "php": "^8.4|^8.5|^8.6",
@@ -21,9 +21,9 @@
         "ext-xmlreader": "*",
         "ext-simplexml": "*",
         "ext-redis": "*",
-        "venusian/surface": "^0.10.1",
+        "venusian/surface": "^0.10.5",
         "venusian/framework": "^0.10.0",
-        "jovian/venusian-appkit": "^0.10.2",
+        "jovian/venusian-appkit": "^0.10.5",
         "venusian/probe": "^0.10.0",
         "projectsaturnstudios/venusian-stargazer": "^0.10.0"
     },
